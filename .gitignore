@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# Sanal ortam
+.venv/
+venv/
+
+# Ortam degiskenleri / gizli bilgiler
+.env
+*.key
+secrets.*
+
+# Veri ve cikti klasorleri
+data/vectordb/
+data/cache/
+data/chroma_benchmark/
+*.faiss
+*.sqlite3
+
+# IDE
+.vscode/
+.idea/
+
+# Isletim sistemi
+Thumbs.db
+.DS_Store
+
+# Hugging Face cache
+.cache/

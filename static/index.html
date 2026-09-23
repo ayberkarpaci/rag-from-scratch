@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RAG Question Answering</title>
+<style>
+  :root {
+    --bg: #0f1115;
+    --panel: #171a21;
+    --border: #262b36;
+    --text: #e4e6eb;
+    --muted: #8b93a7;
+    --accent: #4c8dff;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    padding: 32px 20px;
+    background: var(--bg);
+    color: var(--text);
+    font: 15px/1.6 -apple-system, "Segoe UI", system-ui, sans-serif;
+  }
+
+  .container { max-width: 860px; margin: 0 auto; }
+
+  h1 { font-size: 20px; font-weight: 600; margin: 0 0 4px; }
+
+  .subtitle { color: var(--muted); font-size: 13px; margin-bottom: 28px; }
+
+  .controls { display: flex; gap: 10px; margin-bottom: 20px; }
+
+  input[type="text"], input[type="number"] {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    padding: 11px 13px;
+    font: inherit;
+    outline: none;
+  }
+
+  input[type="text"] { flex: 1; }
+  input[type="number"] { width: 76px; }
+  input:focus { border-color: var(--accent); }
+
+  button {
+    background: var(--accent);
+    border: none;
+    border-radius: 6px;
+    color: #fff;
+    padding: 11px 22px;
+    font: inherit;
+    font-weight: 500;
+    cursor: pointer;
+  }
+
+  button:disabled { opacity: 0.5; cursor: default; }
+
+  .section-label {
+    color: var(--muted);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin: 24px 0 10px;
+  }
+
+  .answer {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: 6px;
+    padding: 16px 18px;
+    white-space: pre-wrap;
+  }
+
+  .chunk {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 13px 15px;
+    margin-bottom: 8px;
+  }
+
+  .chunk-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
+    font-size: 12px;
+  }
+
+  .chunk-id { color: var(--muted); font-family: ui-monospace, monospace; }
+
+  .score {
+    background: rgba(76, 141, 255, 0.15);
+    color: var(--accent);
+    border-radius: 4px;
+    padding: 2px 8px;
+    font-family: ui-monospace, monospace;
+    flex-shrink: 0;
+  }
+
+  .chunk-text { color: #c3c8d4; font-size: 13.5px; }
+
+  .status { color: var(--muted); font-size: 13px; }
+
+  .config-bar {
+    color: var(--muted);
+    font-size: 12px;
+    font-family: ui-monospace, monospace;
+    margin-bottom: 20px;
+  }
+
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>RAG Question Answering</h1>
+  <div class="subtitle">Retrieval-augmented answering over a financial QA corpus</div>
+
+  <div class="config-bar" id="configBar"></div>
+
+  <div class="controls">
+    <input type="text" id="question" placeholder="Ask a question about the corpus..."
+           autocomplete="off">
+    <input type="number" id="k" value="5" min="1" max="20"
+           title="Context chunks sent to the model">
+    <button id="askBtn">Ask</button>
+  </div>
+
+  <div id="status" class="status"></div>
+
+  <div id="result" class="hidden">
+    <div class="section-label">Answer</div>
+    <div class="answer" id="answer"></div>
+
+    <div class="section-label">Retrieved context</div>
+    <div id="chunks"></div>
+  </div>
+</div>
+
+<script>
+const questionInput = document.getElementById("question");
+const kInput = document.getElementById("k");
+const askBtn = document.getElementById("askBtn");
+const statusEl = document.getElementById("status");
+const resultEl = document.getElementById("result");
+const answerEl = document.getElementById("answer");
+const chunksEl = document.getElementById("chunks");
+
+async function loadConfig() {
+  try {
+    const res = await fetch("/api/config");
+    const cfg = await res.json();
+    document.getElementById("configBar").textContent =
+      `chunk_size=${cfg.chunk_size}  overlap=${cfg.chunk_overlap}  ` +
+      `retrieve_k=${cfg.retrieve_k}  reranker=${cfg.reranker_model}  ` +
+      `model=${cfg.llm_model}`;
+    kInput.value = cfg.top_k;
+  } catch (e) {
+    // config yuklenemezse arayuz yine calisir
+  }
+}
+
+async function ask() {
+  const question = questionInput.value.trim();
+  if (!question) return;
+
+  askBtn.disabled = true;
+  statusEl.textContent = "Retrieving and generating...";
+  resultEl.classList.add("hidden");
+
+  try {
+    const res = await fetch("/api/ask", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ question, k: parseInt(kInput.value, 10) })
+    });
+
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+    const data = await res.json();
+
+    answerEl.textContent = data.answer;
+    chunksEl.innerHTML = data.chunks.map(c => `
+      <div class="chunk">
+        <div class="chunk-head">
+          <span class="chunk-id">${c.chunk_id}</span>
+          <span class="score">${c.score.toFixed(4)}</span>
+        </div>
+        <div class="chunk-text">${escapeHtml(c.text)}</div>
+      </div>
+    `).join("");
+
+    statusEl.textContent = "";
+    resultEl.classList.remove("hidden");
+  } catch (err) {
+    statusEl.textContent = `Error: ${err.message}`;
+  } finally {
+    askBtn.disabled = false;
+  }
+}
+
+function escapeHtml(text) {
+  const div = document.createElement("div");
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+askBtn.addEventListener("click", ask);
+questionInput.addEventListener("keydown", e => {
+  if (e.key === "Enter") ask();
+});
+
+loadConfig();
+</script>
+</body>
+</html>
