@@ -554,8 +554,8 @@ Her iki yontemden k×2 aday cekilip birlesim sonrasi ilk k tanesi alindi.
 | Answer Relevancy | **0.6977** | 0.6517 | -0.046 |
 | Retrieval F1 | **0.7733** | 0.7416 | -0.032 |
 
-(Answer Relevancy'de 1 NaN: hakem modelin cikti formati bir soruda
-ayristirilamadi. Skor 29 soru uzerinden. Diger metrikler temiz.)
+(Ilk calistirmada Answer Relevancy'de 1 NaN olustu: hakem modelin cikti
+formati bir soruda ayristirilamadi. Olcum tekrarlandi ve temiz alindi.)
 
 **Sonuc: hybrid search bu veri setinde performansi dusurdu.**
 
@@ -717,8 +717,8 @@ isabetiyle degil, aldigi cevabin dogrulugu ve konuyla ilgisiyle ilgileniyor.
 Faithfulness dogrudan halusinasyon kontrolu islevi goruyor
 ve finansal alanda uydurma cevabin maliyeti yuksek.
 
-Bu karar tartismaya aciktir; her iki konfigurasyonun skorlari raporda birlikte
-sunulmaktadir.
+Bu karar tartismaya aciktir; her iki konfigurasyonun skorlari `benchmark_raporu.md`
+icinde birlikte sunulmaktadir.
 
 Secilen konfigurasyon: `retrieve_k=20`, `top_k=5`, `bge-reranker-v2-m3`.
 
@@ -936,7 +936,8 @@ tasiyabiliyor. Goreli siralama (top_k) mutlak esikten daha saglikli calisiyor.
 | Context Precision | 0.8048 | 0.7866 | -0.018 |
 | Context Recall | 0.6426 | 0.6598 | +0.017 |
 
-Toplam 14 olcum yapildi; hepsinde NaN sayisi sifir.
+Toplam 17 olcum (16 farkli konfigurasyon) yapildi; hepsinde NaN sayisi sifir.
+Tum olcumlerin tablosu: `benchmark_raporu.md`.
 
 ## Genel cikarimlar
 
@@ -959,8 +960,8 @@ metrigi yukseltti.
 temizligi tek basina Faithfulness'a +0.054 katti; hicbir parametre degisimi
 bu kadar etkili olmadi.
 
-**5. Negatif sonuclar da sonuctur.** On deneyden ucu reddedildi (hybrid
-search, top_k=3, skor esigi). Denemeden reddetmek yerine olcup gerekceyle
+**5. Negatif sonuclar da sonuctur.** Denenen alti yaklasimdan ucu reddedildi
+(hybrid search, top_k=3, skor esigi). Denemeden reddetmek yerine olcup gerekceyle
 elemek, mimari kararlarin savunulabilirligini artiriyor.
 
 ## Sinirlamalar

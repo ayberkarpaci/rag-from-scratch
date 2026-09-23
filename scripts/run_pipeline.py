@@ -30,8 +30,12 @@ def main():
     parser.add_argument("--top-k", type=int, default=None,
                         help="LLM'e verilecek chunk sayisi")
     parser.add_argument("--name", type=str, default="baseline")
-    parser.add_argument("--chunk-size", type=int, default=None)
-    parser.add_argument("--overlap", type=int, default=None)
+    # Indeks build_index.py ile kurulur; bu iki deger yalnizca sonuc
+    # dosyasindaki konfigurasyon kaydina yazilir.
+    parser.add_argument("--chunk-size", type=int, default=None,
+                        help="Mevcut indeksin chunk boyutu (kayit icin)")
+    parser.add_argument("--overlap", type=int, default=None,
+                        help="Mevcut indeksin overlap degeri (kayit icin)")
     parser.add_argument("--hybrid", action="store_true")
     parser.add_argument("--rerank", action="store_true")
     parser.add_argument("--prompt", type=str, default="baseline",
