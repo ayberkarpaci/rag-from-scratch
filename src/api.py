@@ -9,7 +9,7 @@ load_dotenv(ROOT / ".env")
 
 from fastapi import FastAPI
 from fastapi.responses import FileResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from src import config
 from src.pipeline import RAGPipeline
@@ -21,8 +21,9 @@ pipeline = RAGPipeline(prompt_variant="cited")
 
 
 class Query(BaseModel):
-    question: str
-    k: int = config.TOP_K
+    question: str = Field(min_length=1)
+    # k, reranker'a giden aday sayisini (RETRIEVE_K) gecemez
+    k: int = Field(default=config.TOP_K, ge=1, le=config.RETRIEVE_K)
 
 
 @app.get("/")

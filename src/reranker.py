@@ -55,7 +55,10 @@ class Reranker:
                     continue
 
                 response.raise_for_status()
-                results = response.json()["results"][:top_k]
+                # Servislerin cogu sonuclari skora gore sirali dondurur ama
+                # bu garanti degil; kesmeden once kendimiz siralariz.
+                results = sorted(response.json()["results"],
+                                 key=lambda r: -r["relevance_score"])[:top_k]
 
                 if score_threshold is not None:
                     filtered = [r for r in results
@@ -73,4 +76,8 @@ class Reranker:
                     raise
                 time.sleep(10 * (attempt + 1))
 
-        return chunks[:top_k]
+        # Sessizce siralanmamis adaylara donmek, "rerank" etiketli bir deneyi
+        # reranker olmadan calistirip sonuclari bozardi.
+        raise RuntimeError(
+            f"Reranker {self.max_retries} denemede de rate limit'e takildi"
+        )
