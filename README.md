@@ -20,9 +20,8 @@ Every measurement finished with zero NaN scores.
 | Context Recall | 0.6426 | 0.6598 | +0.017 |
 
 The full measurement log and the reasoning behind each decision are in
-[`results/benchmark_raporu.md`](results/benchmark_raporu.md); notes taken
-during the experiments are in [`results/gozlemler.md`](results/gozlemler.md)
-(both in Turkish).
+[`results/benchmark_report.md`](results/benchmark_report.md); notes taken
+during the experiments are in [`results/experiment_notes.md`](results/experiment_notes.md).
 
 ## Final configuration
 
@@ -88,8 +87,8 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
-or run `scripts\setup_env.ps1`. Then copy `.env.example` to `.env` and fill
-in the API address and token:
+or run `powershell -ExecutionPolicy Bypass -File scripts\setup_env.ps1`.
+Then copy `.env.example` to `.env` and fill in the API address and token:
 
 ```
 LLM_BASE_URL=<api-url>
@@ -152,7 +151,7 @@ pytest
 framework, so each parameter can be measured directly and there is no
 abstraction layer to debug through.
 
-**Exact search.** At 137 chunks an ANN index is unnecessary. Compared with
+**Exact search.** With under 140 chunks an ANN index is unnecessary. Compared with
 ChromaDB, NumPy exact search was 18 to 21 times faster and returned identical
 results.
 
@@ -165,5 +164,5 @@ raised Faithfulness by 0.039. A stricter "do not infer" prompt lowered it by
 0.186 instead.
 
 **Reranker choice.** The first candidate, Qwen3-Reranker-8B, produced
-irrelevant orderings in testing (see `results/gozlemler.md`), so
+irrelevant orderings in testing (see `results/experiment_notes.md`), so
 bge-reranker-v2-m3 is used.
