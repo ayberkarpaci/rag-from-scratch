@@ -1,6 +1,6 @@
 # RAG Question Answering with Ragas-Based Tuning
 
-[![tests](https://github.com/ayberkarpaci/rag-ragas-optimization/actions/workflows/tests.yml/badge.svg)](https://github.com/ayberkarpaci/rag-ragas-optimization/actions/workflows/tests.yml)
+[![tests](https://github.com/ayberkarpaci/rag-from-scratch/actions/workflows/tests.yml/badge.svg)](https://github.com/ayberkarpaci/rag-from-scratch/actions/workflows/tests.yml)
 
 An end-to-end Retrieval-Augmented Generation (RAG) question answering system
 written in plain Python, without a RAG framework (no LangChain or LlamaIndex
