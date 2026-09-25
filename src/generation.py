@@ -1,4 +1,4 @@
-"""Getirilen baglam uzerinden LLM cevabi uretir."""
+"""Generates the LLM answer from the retrieved context."""
 
 import time
 from typing import List
@@ -11,7 +11,7 @@ from src import config
 
 
 class Generator:
-    """Baglam ve soruyu prompt'a yerlestirip LLM'den cevap alir."""
+    """Puts the context and question into the prompt and asks the LLM."""
 
     def __init__(self, prompt_variant: str = "baseline", max_retries: int = 5):
         self.client = OpenAI(
@@ -25,14 +25,14 @@ class Generator:
 
     @staticmethod
     def build_prompt(question: str, contexts: List[str]) -> str:
-        """Baglam bloklarini numaralandirip soruyla birlikte tek metne cevirir."""
+        """Numbers the context blocks and joins them with the question."""
         blocks = [f"[{i + 1}] {text}" for i, text in enumerate(contexts)]
         context_section = "\n\n".join(blocks)
 
         return f"Context:\n{context_section}\n\nQuestion: {question}\n\nAnswer:"
 
     def generate(self, question: str, contexts: List[str]) -> str:
-        """Rate limit durumunda artan bekleme suresiyle yeniden dener."""
+        """Retries with a growing wait when rate-limited."""
         for attempt in range(self.max_retries):
             try:
                 response = self.client.chat.completions.create(
@@ -51,7 +51,7 @@ class Generator:
                 if attempt == self.max_retries - 1:
                     raise
                 wait = 30 * (attempt + 1)
-                print(f"    rate limit, {wait}s bekleniyor...")
+                print(f"    rate limited, waiting {wait}s...")
                 time.sleep(wait)
 
         return ""

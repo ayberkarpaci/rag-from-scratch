@@ -1,4 +1,4 @@
-"""Corpus'taki metin bozukluklarini tespit eder."""
+"""Finds text defects in the corpus."""
 
 import json
 import re
@@ -18,20 +18,20 @@ def main():
     text = " ".join(d["text"] for d in documents)
 
     patterns = {
-        "bosluksuz cumle sonu (.X)": r"[.!?][A-Z]",
-        "cift tirnak": r'""',
-        "tirnak sonrasi harf": r'"[A-Za-z]',
-        "coklu bosluk": r"  +",
-        "bosluksuz virgul": r",[A-Za-z]",
+        "sentence end without space (.X)": r"[.!?][A-Z]",
+        "doubled quote": r'""',
+        "letter after quote": r'"[A-Za-z]',
+        "repeated spaces": r"  +",
+        "comma without space": r",[A-Za-z]",
     }
 
-    print(f"Toplam {len(documents)} dokuman, {len(text):,} karakter\n")
+    print(f"{len(documents)} documents, {len(text):,} characters\n")
 
     for name, pattern in patterns.items():
         matches = re.findall(pattern, text)
         print(f"{name:<32} {len(matches):>5}")
 
-    print("\n--- Ornekler ---")
+    print("\n--- Examples ---")
     for match in re.finditer(r"[.!?][A-Z]", text):
         start = max(0, match.start() - 40)
         print(f"  ...{text[start:match.end() + 40]}...")

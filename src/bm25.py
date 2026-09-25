@@ -1,4 +1,4 @@
-"""BM25 kelime tabanli arama."""
+"""BM25 keyword search."""
 
 import math
 import re
@@ -7,17 +7,17 @@ from typing import List, Tuple
 
 
 def tokenize(text: str) -> List[str]:
-    """Metni kucuk harfli kelime listesine cevirir."""
+    """Turns text into a list of lowercase words."""
     return re.findall(r"\b\w+\b", text.lower())
 
 
 class BM25:
     """
-    Okapi BM25 siralamasi.
+    Okapi BM25 ranking.
 
-    Skor, terim sikligi (TF) ve ters dokuman sikligi (IDF) uzerinden
-    hesaplanir. k1 terim sikliginin doyum noktasini, b ise dokuman uzunlugu
-    normalizasyonunun agirligini belirler.
+    The score is built from term frequency (TF) and inverse document
+    frequency (IDF). k1 sets where term frequency saturates, and b sets how
+    strongly document length is normalized.
     """
 
     def __init__(self, chunks: List[dict], k1: float = 1.5, b: float = 0.75):
@@ -33,7 +33,7 @@ class BM25:
         self.idf = self._compute_idf()
 
     def _compute_idf(self) -> dict:
-        """Her terim icin ters dokuman sikligi."""
+        """Inverse document frequency of every term."""
         document_count = len(self.documents)
         containing = Counter()
 
@@ -47,7 +47,7 @@ class BM25:
         }
 
     def search(self, query: str, k: int = 5) -> List[Tuple[dict, float]]:
-        """Sorguya en yuksek BM25 skoruna sahip k chunk'i dondurur."""
+        """Returns the k chunks with the highest BM25 score for the query."""
         query_terms = tokenize(query)
         scores = []
 

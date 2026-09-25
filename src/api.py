@@ -1,4 +1,4 @@
-"""RAG sistemi icin HTTP arayuzu."""
+"""HTTP interface for the RAG system."""
 
 from pathlib import Path
 
@@ -22,7 +22,7 @@ pipeline = RAGPipeline(prompt_variant="cited")
 
 class Query(BaseModel):
     question: str = Field(min_length=1)
-    # k, reranker'a giden aday sayisini (RETRIEVE_K) gecemez
+    # k cannot exceed the number of candidates sent to the reranker (RETRIEVE_K)
     k: int = Field(default=config.TOP_K, ge=1, le=config.RETRIEVE_K)
 
 

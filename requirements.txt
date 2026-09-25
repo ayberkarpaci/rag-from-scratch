@@ -1,6 +1,6 @@
-# Ragas ve LangChain surumleri birbirine bagimli; bu kombinasyon dogrulandi.
-# Guncel surumler (ragas 0.4.x) langchain-community'nin kaldirilmis
-# modullerini bekledigi icin import hatasi veriyor.
+# Ragas and LangChain versions depend on each other; this combination is tested.
+# Newer releases (ragas 0.4.x) expect langchain-community modules that were
+# removed, and fail on import.
 ragas==0.2.14
 langchain-community==0.3.14
 langchain-openai==0.2.14
@@ -12,10 +12,10 @@ openai
 python-dotenv
 requests
 
-# Web arayuzu
+# Web UI
 fastapi
 uvicorn
 
-# SSL denetimi yapan aglarda Windows sertifika deposu kullanilir.
+# Use the Windows certificate store on networks that inspect TLS.
 pip-system-certs
 certifi

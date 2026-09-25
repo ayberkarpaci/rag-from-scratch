@@ -1,4 +1,4 @@
-"""LLM servisi baglantisini ve model erisimini dogrular."""
+"""Checks the connection to the model server and access to each model."""
 
 import sys
 from pathlib import Path
@@ -17,7 +17,7 @@ from src import config
 
 
 def build_client() -> OpenAI:
-    """SSL denetimi yapan aglarda sertifika paketi acikca belirtilmelidir."""
+    """On networks that inspect TLS the certificate bundle must be given explicitly."""
     http_client = httpx.Client(verify=certifi.where(), timeout=60.0)
 
     return OpenAI(
@@ -30,7 +30,7 @@ def build_client() -> OpenAI:
 def main():
     client = build_client()
 
-    print("LLM testi...")
+    print("LLM test...")
     try:
         response = client.chat.completions.create(
             model=config.LLM_MODEL,
@@ -40,19 +40,19 @@ def main():
         )
         print(f"  {config.LLM_MODEL} -> {response.choices[0].message.content}")
     except Exception as e:
-        print(f"  HATA: {type(e).__name__}: {e}")
+        print(f"  ERROR: {type(e).__name__}: {e}")
 
-    print("\nEmbedding testi...")
+    print("\nEmbedding test...")
     try:
         response = client.embeddings.create(
             model=config.EMBEDDING_MODEL,
             input=["test sentence"],
         )
-        print(f"  {config.EMBEDDING_MODEL} -> boyut {len(response.data[0].embedding)}")
+        print(f"  {config.EMBEDDING_MODEL} -> dimension {len(response.data[0].embedding)}")
     except Exception as e:
-        print(f"  HATA: {type(e).__name__}: {e}")
+        print(f"  ERROR: {type(e).__name__}: {e}")
 
-    print("\nJudge testi...")
+    print("\nJudge test...")
     try:
         response = client.chat.completions.create(
             model=config.JUDGE_MODEL,
@@ -62,7 +62,7 @@ def main():
         )
         print(f"  {config.JUDGE_MODEL} -> {response.choices[0].message.content}")
     except Exception as e:
-        print(f"  HATA: {type(e).__name__}: {e}")
+        print(f"  ERROR: {type(e).__name__}: {e}")
 
 
 if __name__ == "__main__":

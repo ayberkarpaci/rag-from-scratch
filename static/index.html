@@ -163,7 +163,7 @@ async function loadConfig() {
       `model=${cfg.llm_model}`;
     kInput.value = cfg.top_k;
   } catch (e) {
-    // config yuklenemezse arayuz yine calisir
+    // the UI still works if the config cannot be loaded
   }
 }
 

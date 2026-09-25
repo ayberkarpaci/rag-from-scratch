@@ -1,6 +1,6 @@
-"""NumPy tabanli depo ile ChromaDB'nin arama performansini karsilastirir.
+"""Compares search performance of the NumPy store and ChromaDB.
 
-Bu script chromadb paketini gerektirir (requirements.txt'de yer almaz):
+Needs the chromadb package, which is not in requirements.txt:
     pip install chromadb
 """
 
@@ -48,7 +48,7 @@ def benchmark_chroma(collection, query_vectors: np.ndarray, k: int) -> float:
 
 def compare_results(store: VectorStore, collection, query_vectors: np.ndarray,
                     k: int) -> float:
-    """Iki yontemin dondurdugu chunk kumelerinin ortusme oranini olcer."""
+    """Measures how much the chunk sets returned by the two methods overlap."""
     overlaps = []
 
     for vector in query_vectors:
@@ -65,13 +65,13 @@ def main():
 
     store = VectorStore()
     store.load()
-    print(f"Chunk sayisi: {len(store)}")
+    print(f"Chunks: {len(store)}")
 
     questions = load_questions()
     embedder = EmbeddingClient()
     query_vectors = embedder.embed([q["question"] for q in questions])
 
-    # ChromaDB kolleksiyonu ayni vektorlerle kuruluyor
+    # Build the ChromaDB collection from the same vectors
     if CHROMA_DIR.exists():
         shutil.rmtree(CHROMA_DIR)
 
@@ -95,18 +95,18 @@ def main():
 
     print()
     print("=" * 52)
-    print(f"{'Yontem':<20} {'Sorgu (ms)':>14}")
+    print(f"{'Method':<20} {'Query (ms)':>14}")
     print("-" * 52)
     print(f"{'NumPy (exact)':<20} {numpy_ms:>14.3f}")
     print(f"{'ChromaDB (HNSW)':<20} {chroma_ms:>14.3f}")
     print("=" * 52)
-    print(f"ChromaDB indeksleme suresi : {chroma_index_time:.3f} saniye")
-    print(f"Sonuc ortusme orani        : {overlap:.1%}")
+    print(f"ChromaDB indexing time : {chroma_index_time:.3f} s")
+    print(f"Result overlap         : {overlap:.1%}")
 
     try:
         shutil.rmtree(CHROMA_DIR)
     except PermissionError:
-        print(f"\nNot: {CHROMA_DIR} elle silinebilir (dosya kilidi).")
+        print(f"\nNote: delete {CHROMA_DIR} by hand (the file is locked).")
 
 
 if __name__ == "__main__":

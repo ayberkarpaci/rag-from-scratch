@@ -1,7 +1,7 @@
-"""Reranker modellerini karsilastirir.
+"""Compares reranker models.
 
-Qwen3-Reranker-8B ve bge-reranker-v2-m3'un ayni sorgu uzerindeki
-siralamalari karsilastirilir.
+Ranks the same query and documents with Qwen3-Reranker-8B and
+bge-reranker-v2-m3.
 """
 
 import sys
@@ -42,7 +42,7 @@ def rerank(model: str):
 
 
 def main():
-    print(f"Sorgu: {QUERY}\n")
+    print(f"Query: {QUERY}\n")
 
     for model in MODELS:
         print("=" * 70)
@@ -54,7 +54,7 @@ def main():
                 text = item["document"]["text"]
                 print(f"  {rank}. [{item['relevance_score']:.4f}] {text}")
         except Exception as e:
-            print(f"  HATA: {e}")
+            print(f"  ERROR: {e}")
 
         print()
 

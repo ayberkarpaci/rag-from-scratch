@@ -1,4 +1,4 @@
-"""Embedding servisi ve disk cache."""
+"""Embedding client with a disk cache."""
 
 import hashlib
 import json
@@ -14,7 +14,7 @@ from src import config
 
 
 class EmbeddingClient:
-    """Metinleri vektore cevirir. Ayni metin tekrar istenirse cache'ten doner."""
+    """Turns texts into vectors. A text seen before is served from the cache."""
 
     def __init__(self, cache_dir: Path = None, batch_size: int = 16):
         self.client = OpenAI(
@@ -41,7 +41,7 @@ class EmbeddingClient:
             json.dump(self.cache, f)
 
     def _key(self, text: str) -> str:
-        """Model adi + metin icerigi uzerinden cache anahtari."""
+        """Cache key from the model name plus the text."""
         raw = f"{self.model}:{text}".encode("utf-8")
         return hashlib.sha256(raw).hexdigest()
 
@@ -50,13 +50,13 @@ class EmbeddingClient:
         return [item.embedding for item in response.data]
 
     def embed(self, texts: List[str], show_progress: bool = False) -> np.ndarray:
-        """Metin listesini vektor matrisine cevirir. Sonuc (n, boyut) seklindedir."""
+        """Turns a list of texts into a matrix of shape (n, dimension)."""
         keys = [self._key(t) for t in texts]
         missing = [i for i, k in enumerate(keys) if k not in self.cache]
 
         if missing and show_progress:
-            print(f"  {len(missing)}/{len(texts)} metin hesaplanacak "
-                  f"({len(texts) - len(missing)} cache'te)")
+            print(f"  {len(missing)}/{len(texts)} texts to embed "
+                  f"({len(texts) - len(missing)} cached)")
 
         for start in range(0, len(missing), self.batch_size):
             batch_idx = missing[start:start + self.batch_size]

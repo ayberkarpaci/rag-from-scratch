@@ -1,4 +1,4 @@
-"""Vektor deposundan getirme kalitesini gozle kontrol eder."""
+"""Prints retrieval results for a manual quality check."""
 
 import json
 import sys
@@ -23,7 +23,7 @@ def load_questions() -> list:
 def main():
     store = VectorStore()
     store.load()
-    print(f"Depo yuklendi: {len(store)} chunk\n")
+    print(f"Store loaded: {len(store)} chunks\n")
 
     client = EmbeddingClient()
     questions = load_questions()
@@ -33,8 +33,8 @@ def main():
         results = store.search(query_vector, k=3)
 
         print("=" * 70)
-        print(f"SORU: {question['question']}")
-        print(f"Beklenen kaynak: doc_{question['question_id'][2:]}")
+        print(f"QUESTION: {question['question']}")
+        print(f"Expected source: doc_{question['question_id'][2:]}_*")
         print()
 
         for chunk, score in results:

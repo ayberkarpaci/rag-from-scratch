@@ -1,4 +1,4 @@
-"""Embedding servisini ve cache davranisini dogrular."""
+"""Checks the embedding service and the cache."""
 
 import sys
 import time
@@ -30,16 +30,16 @@ def main():
 
     start = time.time()
     vectors = client.embed(texts, show_progress=True)
-    print(f"Ilk cagri: {time.time() - start:.2f} saniye")
-    print(f"Matris sekli: {vectors.shape}")
+    print(f"First call: {time.time() - start:.2f} s")
+    print(f"Matrix shape: {vectors.shape}")
 
     start = time.time()
     client.embed(texts)
-    print(f"Ikinci cagri (cache): {time.time() - start:.2f} saniye")
+    print(f"Second call (cache): {time.time() - start:.2f} s")
 
-    print("\nBenzerlik kontrolu:")
-    print(f"  finans-finans : {cosine(vectors[0], vectors[1]):.4f}")
-    print(f"  finans-kedi   : {cosine(vectors[0], vectors[2]):.4f}")
+    print("\nSimilarity check:")
+    print(f"  finance-finance : {cosine(vectors[0], vectors[1]):.4f}")
+    print(f"  finance-cat     : {cosine(vectors[0], vectors[2]):.4f}")
 
 
 if __name__ == "__main__":

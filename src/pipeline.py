@@ -1,4 +1,4 @@
-"""Uctan uca RAG akisi: soru -> retrieval -> generation."""
+"""End-to-end RAG flow: question -> retrieval -> generation."""
 
 from typing import List
 
@@ -12,10 +12,10 @@ from src.vectorstore import VectorStore
 
 def reciprocal_rank_fusion(rankings: List[List[dict]], k_constant: int = 60) -> List[dict]:
     """
-    Birden fazla siralamayi tek listede birlestirir.
+    Merges several rankings into one list.
 
-    Her chunk, her listedeki sirasina gore 1/(k + sira) puani alir. Iki
-    yontemde de ust siralarda cikan chunk'lar one gecer.
+    Each chunk gets 1/(k + rank) points for its rank in every list, so chunks
+    that rank high in both methods come first.
     """
     scores = {}
     lookup = {}
@@ -31,7 +31,7 @@ def reciprocal_rank_fusion(rankings: List[List[dict]], k_constant: int = 60) -> 
 
 
 class RAGPipeline:
-    """Vektor deposundan baglam getirip LLM cevabi uretir."""
+    """Retrieves context from the vector store and generates the LLM answer."""
 
     def __init__(self, store: VectorStore = None, use_hybrid: bool = None,
                  use_reranker: bool = None, prompt_variant: str = "baseline",
@@ -56,10 +56,10 @@ class RAGPipeline:
     def retrieve(self, question: str, retrieve_k: int = None,
                  top_k: int = None) -> List[dict]:
         """
-        Soruya en yakin chunk'lari dondurur.
+        Returns the chunks closest to the question.
 
-        Reranker etkinse once retrieve_k aday cekilir, ardindan top_k tanesine
-        indirilir. Amac Recall'i genis tutup Precision'i eleme ile korumak.
+        With the reranker on, retrieve_k candidates are fetched first and then
+        cut down to top_k: a wide pool keeps Recall up, the cut keeps Precision.
         """
         retrieve_k = retrieve_k if retrieve_k is not None else config.RETRIEVE_K
         top_k = top_k if top_k is not None else config.TOP_K
@@ -83,7 +83,7 @@ class RAGPipeline:
 
     def answer(self, question: str, retrieve_k: int = None,
                top_k: int = None) -> dict:
-        """Soruyu cevaplar; kullanilan baglami da dondurur."""
+        """Answers the question and also returns the context used."""
         chunks = self.retrieve(question, retrieve_k, top_k)
         contexts = [c["text"] for c in chunks]
         answer = self.generator.generate(question, contexts)

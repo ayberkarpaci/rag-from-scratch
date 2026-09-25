@@ -3,16 +3,16 @@ __pycache__/
 *.py[cod]
 *.egg-info/
 
-# Sanal ortam
+# Virtual environments
 .venv/
 venv/
 
-# Ortam degiskenleri / gizli bilgiler
+# Environment variables / secrets
 .env
 *.key
 secrets.*
 
-# Veri ve cikti klasorleri
+# Data and output folders
 data/vectordb/
 data/cache/
 data/chroma_benchmark/
@@ -23,7 +23,7 @@ data/chroma_benchmark/
 .vscode/
 .idea/
 
-# Isletim sistemi
+# Operating system
 Thumbs.db
 .DS_Store
 

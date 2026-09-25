@@ -1,4 +1,4 @@
-"""Vektor deposu. Corpus olcegi kucuk oldugundan exact search kullanilir."""
+"""Vector store. The corpus is small, so exact search is used."""
 
 import json
 from pathlib import Path
@@ -10,17 +10,17 @@ from src import config
 
 
 class VectorStore:
-    """Chunk vektorlerini saklar ve kosinus benzerligine gore arama yapar."""
+    """Holds chunk vectors and searches them by cosine similarity."""
 
     def __init__(self):
         self.chunks: List[dict] = []
         self.matrix: np.ndarray = None
 
     def build(self, chunks: List[dict], vectors: np.ndarray):
-        """Chunk listesi ve karsilik gelen vektor matrisinden depo olusturur."""
+        """Builds the store from a chunk list and the matching vector matrix."""
         if len(chunks) != len(vectors):
             raise ValueError(
-                f"chunk sayisi ({len(chunks)}) vektor sayisina ({len(vectors)}) esit degil"
+                f"number of chunks ({len(chunks)}) does not match number of vectors ({len(vectors)})"
             )
 
         self.chunks = chunks
@@ -28,15 +28,15 @@ class VectorStore:
 
     @staticmethod
     def _normalize(vectors: np.ndarray) -> np.ndarray:
-        """Vektorleri birim uzunluga getirir; boylece kosinus benzerligi ic carpima esitlenir."""
+        """Scales vectors to unit length, so cosine similarity becomes a dot product."""
         norms = np.linalg.norm(vectors, axis=1, keepdims=True)
         norms[norms == 0] = 1.0
         return vectors / norms
 
     def search(self, query_vector: np.ndarray, k: int = 5) -> List[Tuple[dict, float]]:
-        """Sorgu vektorune en yakin k chunk'i benzerlik skoruyla birlikte dondurur."""
+        """Returns the k chunks closest to the query vector, with their similarity."""
         if self.matrix is None:
-            raise RuntimeError("Depo bos. Once build() veya load() cagrilmali.")
+            raise RuntimeError("Store is empty. Call build() or load() first.")
 
         query = query_vector / (np.linalg.norm(query_vector) or 1.0)
         scores = self.matrix @ query

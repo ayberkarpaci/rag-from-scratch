@@ -1,4 +1,4 @@
-"""Cross-encoder tabanli yeniden siralama."""
+"""Cross-encoder reranking."""
 
 import time
 from typing import List
@@ -10,11 +10,11 @@ from src import config
 
 class Reranker:
     """
-    Retrieval sonuclarini soru-dokuman ciftleri uzerinden yeniden siralar.
+    Reorders retrieval results by scoring question-document pairs.
 
-    Vektor aramasi soru ve dokumani ayri ayri kodlar (bi-encoder); reranker
-    ikisini birlikte degerlendirir (cross-encoder) ve daha isabetli bir alaka
-    skoru uretir.
+    Vector search encodes the question and the document separately
+    (bi-encoder); the reranker reads them together (cross-encoder) and gives a
+    more accurate relevance score.
     """
 
     def __init__(self, model: str = None, max_retries: int = 5):
@@ -29,10 +29,10 @@ class Reranker:
     def rerank(self, query: str, chunks: List[dict], top_k: int,
                score_threshold: float = None) -> List[dict]:
         """
-        Chunk listesini alaka skoruna gore siralar ve ilk top_k tanesini dondurur.
+        Sorts the chunks by relevance score and returns the first top_k.
 
-        score_threshold verilirse, esigin altinda kalan chunk'lar elenir. Bu,
-        baglam sayisini sabit tutmak yerine alaka duzeyine gore degistirir.
+        With score_threshold set, chunks below it are dropped, so the number of
+        contexts follows relevance instead of staying fixed.
         """
         if not chunks:
             return []
@@ -50,20 +50,20 @@ class Reranker:
 
                 if response.status_code == 429:
                     wait = 30 * (attempt + 1)
-                    print(f"    rate limit, {wait}s bekleniyor...")
+                    print(f"    rate limited, waiting {wait}s...")
                     time.sleep(wait)
                     continue
 
                 response.raise_for_status()
-                # Servislerin cogu sonuclari skora gore sirali dondurur ama
-                # bu garanti degil; kesmeden once kendimiz siralariz.
+                # Most servers return results sorted by score, but that is not
+                # guaranteed; sort before cutting.
                 results = sorted(response.json()["results"],
                                  key=lambda r: -r["relevance_score"])[:top_k]
 
                 if score_threshold is not None:
                     filtered = [r for r in results
                                 if r["relevance_score"] >= score_threshold]
-                    # Hicbir chunk esigi gecemezse en iyi adayi koru
+                    # If no chunk passes the threshold, keep the best candidate
                     results = filtered if filtered else results[:1]
 
                 return [
@@ -76,8 +76,8 @@ class Reranker:
                     raise
                 time.sleep(10 * (attempt + 1))
 
-        # Sessizce siralanmamis adaylara donmek, "rerank" etiketli bir deneyi
-        # reranker olmadan calistirip sonuclari bozardi.
+        # Silently falling back to unranked candidates would run an experiment
+        # labelled "rerank" without a reranker and corrupt its results.
         raise RuntimeError(
-            f"Reranker {self.max_retries} denemede de rate limit'e takildi"
+            f"Reranker was still rate-limited after {self.max_retries} attempts"
         )

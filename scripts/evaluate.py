@@ -1,4 +1,4 @@
-"""Pipeline ciktisini Ragas ile degerlendirir."""
+"""Scores a pipeline run with Ragas."""
 
 import argparse
 import json
@@ -25,9 +25,9 @@ def load_output(name: str) -> dict:
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--limit", type=int, default=None,
-                        help="Ilk N soruyu degerlendir (test icin)")
+                        help="Only score the first N questions (for testing)")
     parser.add_argument("--name", type=str, default="baseline",
-                        help="Deney adi; pipeline_<name>.json okunur")
+                        help="Experiment name; reads pipeline_<name>.json")
     args = parser.parse_args()
 
     data = load_output(args.name)
@@ -36,8 +36,8 @@ def main():
     if args.limit:
         records = records[:args.limit]
 
-    print(f"{len(records)} kayit degerlendirilecek")
-    print(f"Hakem modeli: {config.JUDGE_MODEL}\n")
+    print(f"Scoring {len(records)} records")
+    print(f"Judge model: {config.JUDGE_MODEL}\n")
 
     start = time.time()
     result = run_evaluation(records)
@@ -54,11 +54,11 @@ def main():
     for name, value in scores.items():
         print(f"  {name:<28} {value:.4f}")
     print("=" * 50)
-    print(f"Sure: {elapsed:.1f} saniye ({elapsed / len(records):.1f} sn/soru)")
+    print(f"Time: {elapsed:.1f} s ({elapsed / len(records):.1f} s/question)")
 
     df = result.to_pandas()
     nan_counts = {}
-    print("\nNaN sayilari:")
+    print("\nNaN counts:")
     for column in ["faithfulness", "answer_relevancy",
                    "llm_context_precision_with_reference", "context_recall"]:
         if column in df.columns:

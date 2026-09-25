@@ -1,4 +1,4 @@
-"""Dokuman parcalama."""
+"""Document chunking."""
 
 from typing import List
 
@@ -65,12 +65,12 @@ def _apply_overlap(chunks: List[str], overlap: int) -> List[str]:
 
 
 def chunk_text(text: str, chunk_size: int = 500, overlap: int = 50) -> List[str]:
-    """Metni parcalara boler. Ayiricilar dogaldan zorlamaya dogru denenir."""
+    """Splits text into chunks, trying separators from the most natural to the most forced."""
     if not text or not text.strip():
         return []
 
     if overlap >= chunk_size:
-        raise ValueError(f"overlap ({overlap}) < chunk_size ({chunk_size}) olmali")
+        raise ValueError(f"overlap ({overlap}) must be smaller than chunk_size ({chunk_size})")
 
     chunks = _recursive_split(text, chunk_size, SEPARATORS)
     chunks = [c.strip() for c in chunks if c.strip()]
@@ -79,7 +79,7 @@ def chunk_text(text: str, chunk_size: int = 500, overlap: int = 50) -> List[str]
 
 def chunk_documents(documents: List[dict], chunk_size: int = 500,
                     overlap: int = 50) -> List[dict]:
-    """Dokuman listesini parcalar, kaynak bilgisini korur."""
+    """Chunks a list of documents and keeps each chunk's source."""
     result = []
 
     for doc in documents:

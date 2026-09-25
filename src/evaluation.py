@@ -1,4 +1,4 @@
-"""Ragas ile RAG cikti kalitesini olcer."""
+"""Measures RAG output quality with Ragas."""
 
 import certifi
 import httpx
@@ -23,7 +23,7 @@ def _http_client() -> httpx.Client:
 
 
 def build_judge_llm() -> LangchainLLMWrapper:
-    """Ragas'in hakem modeli. Reasoning cikti urettigi icin max_tokens yuksek tutulur."""
+    """The Ragas judge model. It emits reasoning, so max_tokens is kept high."""
     llm = ChatOpenAI(
         model=config.JUDGE_MODEL,
         base_url=config.LLM_BASE_URL,
@@ -36,7 +36,7 @@ def build_judge_llm() -> LangchainLLMWrapper:
 
 
 def build_judge_embeddings() -> LangchainEmbeddingsWrapper:
-    """ResponseRelevancy metrigi embedding gerektirir."""
+    """The ResponseRelevancy metric needs embeddings."""
     embeddings = OpenAIEmbeddings(
         model=config.EMBEDDING_MODEL,
         base_url=config.LLM_BASE_URL,
@@ -48,7 +48,7 @@ def build_judge_embeddings() -> LangchainEmbeddingsWrapper:
 
 
 def build_dataset(records: list) -> Dataset:
-    """Pipeline ciktisini Ragas'in bekledigi alan adlarina cevirir."""
+    """Maps pipeline output to the field names Ragas expects."""
     return Dataset.from_dict({
         "user_input": [r["question"] for r in records],
         "response": [r["answer"] for r in records],
@@ -68,9 +68,8 @@ def run_evaluation(records: list) -> dict:
         LLMContextRecall(llm=llm),
     ]
 
-    # Hakem modeli reasoning urettigi icin cagirilar yavas; zaman asimi
-    # yukseltildi. Servis 15 istek/pencere siniri koydugu icin es zamanli
-    # istek sayisi dusuk tutuldu.
+    # The judge emits reasoning, so calls are slow and the timeout is high.
+    # The server allows 15 requests per window, so concurrency is kept low.
     run_config = RunConfig(timeout=900, max_workers=2, max_retries=10)
 
     result = evaluate(

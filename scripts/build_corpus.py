@@ -1,4 +1,4 @@
-"""FiQA veri setinden corpus ve soru dosyalarini olusturur."""
+"""Builds the corpus and question files from the FiQA dataset."""
 
 import json
 from pathlib import Path
@@ -10,7 +10,7 @@ RAW_DIR = ROOT / "data" / "raw"
 
 
 def build_corpus():
-    print("Veri seti yukleniyor...")
+    print("Loading dataset...")
     data = load_dataset("vibrantlabsai/fiqa", "ragas_eval_v3")["baseline"]
 
     documents = []
@@ -46,8 +46,8 @@ def build_corpus():
         json.dump(questions, f, ensure_ascii=False, indent=2)
 
     total_chars = sum(len(d["text"]) for d in documents)
-    print(f"Dokuman: {len(documents)}  Soru: {len(questions)}  "
-          f"Toplam: {total_chars:,} karakter")
+    print(f"Documents: {len(documents)}  Questions: {len(questions)}  "
+          f"Total: {total_chars:,} characters")
     print(f"-> {corpus_path}")
     print(f"-> {questions_path}")
 

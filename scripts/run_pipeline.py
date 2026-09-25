@@ -1,4 +1,4 @@
-"""Tum sorulari calistirir ve sonuclari degerlendirme icin kaydeder."""
+"""Runs every question through the pipeline and saves the output for scoring."""
 
 import argparse
 import json
@@ -24,27 +24,27 @@ def load_questions() -> list:
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--k", type=int, default=None,
-                        help="Getirilecek chunk sayisi")
+                        help="Number of chunks to retrieve")
     parser.add_argument("--retrieve-k", type=int, default=None,
-                        help="Reranker oncesi aday sayisi")
+                        help="Candidates before reranking")
     parser.add_argument("--top-k", type=int, default=None,
-                        help="LLM'e verilecek chunk sayisi")
+                        help="Chunks given to the LLM")
     parser.add_argument("--name", type=str, default="baseline")
-    # Indeks build_index.py ile kurulur; bu iki deger yalnizca sonuc
-    # dosyasindaki konfigurasyon kaydina yazilir.
+    # The index is built by build_index.py; these two values are only
+    # recorded in the output file's configuration.
     parser.add_argument("--chunk-size", type=int, default=None,
-                        help="Mevcut indeksin chunk boyutu (kayit icin)")
+                        help="Chunk size of the current index (for the record)")
     parser.add_argument("--overlap", type=int, default=None,
-                        help="Mevcut indeksin overlap degeri (kayit icin)")
+                        help="Overlap of the current index (for the record)")
     parser.add_argument("--hybrid", action="store_true")
     parser.add_argument("--rerank", action="store_true")
     parser.add_argument("--prompt", type=str, default="baseline",
                         choices=["baseline", "strict", "cited"])
     parser.add_argument("--threshold", type=float, default=None,
-                        help="Reranker skor esigi; altinda kalanlar elenir")
+                        help="Reranker score threshold; chunks below it are dropped")
     args = parser.parse_args()
 
-    # --k tek deger olarak verilirse her ikisine de uygulanir
+    # A single --k applies to both
     retrieve_k = args.retrieve_k or args.k or config.RETRIEVE_K
     top_k = args.top_k or args.k or config.TOP_K
 
@@ -65,8 +65,8 @@ def main():
         "score_threshold": args.threshold,
     }
 
-    print(f"Deney: {args.name}")
-    print(f"{len(questions)} soru, retrieve_k={retrieve_k}, top_k={top_k}, "
+    print(f"Experiment: {args.name}")
+    print(f"{len(questions)} questions, retrieve_k={retrieve_k}, top_k={top_k}, "
           f"rerank={args.rerank}\n")
 
     records = []
@@ -99,7 +99,7 @@ def main():
             "records": records,
         }, f, ensure_ascii=False, indent=2)
 
-    print(f"\nSure: {elapsed:.1f} saniye")
+    print(f"\nTime: {elapsed:.1f} s")
     print(f"-> {output_path}")
 
 

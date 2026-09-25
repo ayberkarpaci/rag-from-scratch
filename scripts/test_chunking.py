@@ -1,4 +1,4 @@
-"""Chunking parametrelerinin corpus uzerindeki etkisini gosterir."""
+"""Shows how the chunking parameters affect the corpus."""
 
 import argparse
 import json
@@ -21,17 +21,17 @@ def show_samples(documents, chunk_size, overlap, count=3):
     chunks = chunk_documents(documents[:1], chunk_size, overlap)
 
     print(f"\nchunk_size={chunk_size}, overlap={overlap} "
-          f"-> ilk dokuman {len(chunks)} parca")
+          f"-> first document gives {len(chunks)} chunks")
 
     for chunk in chunks[:count]:
-        print(f"\n[{chunk['chunk_id']}] {len(chunk['text'])} karakter")
+        print(f"\n[{chunk['chunk_id']}] {len(chunk['text'])} characters")
         print(chunk["text"])
 
 
 def compare_parameters(documents):
     configs = [(200, 20), (300, 30), (500, 50), (800, 80), (1000, 100)]
 
-    print(f"\n{'size':>6} {'overlap':>8} {'chunk':>8} {'ort':>8}")
+    print(f"\n{'size':>6} {'overlap':>8} {'chunks':>8} {'mean':>8}")
 
     for chunk_size, overlap in configs:
         chunks = chunk_documents(documents, chunk_size, overlap)
@@ -42,7 +42,7 @@ def compare_parameters(documents):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--no-clean", action="store_true",
-                        help="Metin temizligini atla (varsayilan: uygulanir)")
+                        help="Skip text cleaning (applied by default)")
     args = parser.parse_args()
 
     documents = load_corpus()

@@ -1,4 +1,4 @@
-"""Corpus'u parcalara boler, vektore cevirir ve vektor deposunu olusturur."""
+"""Chunks the corpus, embeds the chunks and builds the vector store."""
 
 import argparse
 import json
@@ -29,7 +29,7 @@ def main():
     parser.add_argument("--chunk-size", type=int, default=None)
     parser.add_argument("--overlap", type=int, default=None)
     parser.add_argument("--no-clean", action="store_true",
-                        help="Metin temizligini atla (varsayilan: uygulanir)")
+                        help="Skip text cleaning (applied by default)")
     args = parser.parse_args()
 
     chunk_size = args.chunk_size if args.chunk_size else config.CHUNK_SIZE
@@ -40,10 +40,10 @@ def main():
     documents = load_corpus()
     if not args.no_clean:
         documents = clean_documents(documents)
-        print("Metin temizligi uygulandi")
+        print("Text cleaning applied")
 
     chunks = chunk_documents(documents, chunk_size, overlap)
-    print(f"{len(documents)} dokuman -> {len(chunks)} chunk "
+    print(f"{len(documents)} documents -> {len(chunks)} chunks "
           f"(size={chunk_size}, overlap={overlap})")
 
     client = EmbeddingClient()
@@ -53,8 +53,8 @@ def main():
     store.build(chunks, vectors)
     store.save()
 
-    print(f"Depo kaydedildi: {config.VECTORDB_DIR}")
-    print(f"Sure: {time.time() - start:.1f} saniye")
+    print(f"Store saved: {config.VECTORDB_DIR}")
+    print(f"Time: {time.time() - start:.1f} s")
 
 
 if __name__ == "__main__":

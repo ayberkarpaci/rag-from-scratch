@@ -1,4 +1,4 @@
-"""Proje ayarlari. Deney parametreleri tek yerden yonetilir."""
+"""Project settings. Experiment parameters are managed in one place."""
 
 import os
 from pathlib import Path
@@ -11,7 +11,7 @@ VECTORDB_DIR = ROOT / "data" / "vectordb"
 RESULTS_DIR = ROOT / "results"
 
 
-# LLM servisi baglantisi
+# Model server connection
 LLM_BASE_URL = os.getenv("LLM_BASE_URL", "")
 LLM_API_KEY = os.getenv("LLM_API_KEY", "")
 
@@ -27,15 +27,15 @@ CHUNK_OVERLAP = 80
 
 
 # Retrieval
-RETRIEVE_K = 20     # vektor DB'den cekilecek chunk sayisi
-TOP_K = 5           # reranker sonrasi LLM'e verilecek chunk sayisi
+RETRIEVE_K = 20     # chunks fetched from the vector store
+TOP_K = 5           # chunks given to the LLM after reranking
 
 USE_HYBRID_SEARCH = False
 USE_RERANKER = True
 
 
 # Generation
-TEMPERATURE = 0.0   # deterministik cikti; deneyler arasi karsilastirma icin
+TEMPERATURE = 0.0   # deterministic output, so experiments are comparable
 MAX_TOKENS = 512
 
 
@@ -81,7 +81,7 @@ SYSTEM_PROMPT = SYSTEM_PROMPTS["cited"]
 
 
 def describe_config() -> dict:
-    """Deney sonuclariyla birlikte kaydedilecek konfigurasyon ozeti."""
+    """Configuration summary saved together with experiment results."""
     return {
         "chunk_size": CHUNK_SIZE,
         "chunk_overlap": CHUNK_OVERLAP,
