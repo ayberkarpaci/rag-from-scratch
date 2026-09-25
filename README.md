@@ -1,156 +1,169 @@
-# RAG Soru-Cevap Sistemi ve Ragas Degerlendirmesi
+# RAG Question Answering with Ragas-Based Tuning
 
-Uctan uca bir RAG (Retrieval-Augmented Generation) soru-cevap sistemi ve
-Ragas kutuphanesi ile hiperparametre optimizasyonu. Sistem hazir RAG
-framework'u kullanmadan (LangChain, LlamaIndex vb.) saf Python ile yazildi.
+[![tests](https://github.com/ayberkarpaci/rag-ragas-optimization/actions/workflows/tests.yml/badge.svg)](https://github.com/ayberkarpaci/rag-ragas-optimization/actions/workflows/tests.yml)
 
-## Sonuclar
+An end-to-end Retrieval-Augmented Generation (RAG) question answering system
+written in plain Python, without a RAG framework (no LangChain or LlamaIndex
+in the pipeline), plus a hyperparameter study scored with
+[Ragas](https://github.com/explodinggradients/ragas).
 
-Baseline'dan final konfigurasyona kadar 16 farkli konfigurasyon, 17 olcum
-yapildi. Tum olcumlerde NaN sayisi sifir.
+## Results
 
-| Metrik | Baseline | Final | Fark |
+17 measurements over 16 configurations, from the baseline to the final setup.
+Every measurement finished with zero NaN scores.
+
+| Metric | Baseline | Final | Change |
 |---|---|---|---|
 | Faithfulness | 0.7377 | **0.8785** | +0.141 |
 | Answer Relevancy | 0.6555 | **0.7659** | +0.110 |
 | Context Precision | 0.8048 | 0.7866 | -0.018 |
 | Context Recall | 0.6426 | 0.6598 | +0.017 |
 
-Tum olcumler ve karar gerekceleri: `results/benchmark_raporu.md`
-Deney sirasinda tutulan notlar: `results/gozlemler.md`
+The full measurement log and the reasoning behind each decision are in
+[`results/benchmark_raporu.md`](results/benchmark_raporu.md); notes taken
+during the experiments are in [`results/gozlemler.md`](results/gozlemler.md)
+(both in Turkish).
 
-## Final Konfigurasyon
+## Final configuration
 
-| Parametre | Deger |
+| Parameter | Value |
 |---|---|
-| Chunk boyutu | 800 karakter |
-| Overlap | 80 karakter |
-| Metin temizligi | Acik |
-| Retrieval | Dense (vektor), exact search |
-| retrieve_k | 20 |
-| top_k | 5 |
+| Chunk size | 800 characters |
+| Overlap | 80 characters |
+| Text cleaning | On |
+| Retrieval | Dense (vector), exact search |
+| `retrieve_k` | 20 |
+| `top_k` | 5 |
 | Reranker | bge-reranker-v2-m3 |
-| Hybrid search | Kapali (olculdu, performansi dusurdu) |
-| Prompt | Kaynak gosterimli (`cited`) |
+| Hybrid search | Off (measured; it lowered the scores) |
+| Prompt | With citations (`cited`) |
 | Temperature | 0.0 |
 
-## Kullanilan Modeller
+## Models
 
-| Bilesen | Model |
+| Component | Model |
 |---|---|
 | LLM | Qwen3-Next-80B-A3B-Instruct |
-| Embedding | Qwen3-Embedding-8B (4096 boyut) |
+| Embeddings | Qwen3-Embedding-8B (4096 dimensions) |
 | Reranker | bge-reranker-v2-m3 |
-| Ragas hakem modeli | openai/gpt-oss-120b |
+| Ragas judge | openai/gpt-oss-120b |
 
-Modeller OpenAI uyumlu bir API uzerinden servis edilir (ornegin vLLM).
-Reranker icin servisin Cohere uyumlu bir `/rerank` endpoint'i sunmasi gerekir.
+The models are served through an OpenAI-compatible API (for example vLLM).
+The reranker needs a Cohere-compatible `/rerank` endpoint on the same server.
 
-## Veri Seti
+## Dataset
 
-Hugging Face `vibrantlabsai/fiqa`, config `ragas_eval_v3`.
-30 finansal soru-cevap ornegi, ~88.400 karakterlik corpus.
+Hugging Face [`vibrantlabsai/fiqa`](https://huggingface.co/datasets/vibrantlabsai/fiqa),
+config `ragas_eval_v3`: 30 financial questions with reference answers and a
+corpus of about 88,400 characters.
 
-## Kurulum
-
-```
-powershell -ExecutionPolicy Bypass -File scripts\setup_env.ps1
-```
-
-Elle kurulum:
+## How it works
 
 ```
+question ─► embed ─► exact cosine search (retrieve_k=20)
+                          │   (optional: BM25 + reciprocal rank fusion)
+                          ▼
+                  cross-encoder rerank ─► top_k=5 chunks
+                          ▼
+             numbered context + cited prompt ─► LLM ─► answer
+```
+
+| Module | Role |
+|---|---|
+| `src/preprocessing.py` | Repairs punctuation where forum answers were concatenated |
+| `src/chunking.py` | Recursive character splitter with overlap (natural separators first) |
+| `src/embeddings.py` | Batched embedding client with a SHA-256 keyed disk cache |
+| `src/vectorstore.py` | NumPy exact search over L2-normalised vectors |
+| `src/bm25.py` | Okapi BM25 for the hybrid search experiment |
+| `src/reranker.py` | Cross-encoder reranking with retries on rate limits |
+| `src/pipeline.py` | Retrieval, rank fusion, reranking and generation |
+| `src/evaluation.py` | Ragas metrics with a separate judge model |
+| `src/api.py`, `static/` | FastAPI backend and a small web UI |
+
+## Setup
+
+```powershell
 python -m venv .venv
 .venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 ```
 
-API baglantisi icin `.env.example` dosyasi `.env` adiyla kopyalanip
-doldurulmali:
+or run `scripts\setup_env.ps1`. Then copy `.env.example` to `.env` and fill
+in the API address and token:
 
 ```
-LLM_BASE_URL=<api-adresi>
+LLM_BASE_URL=<api-url>
 LLM_API_KEY=<token>
 ```
 
-### Ortam notlari
+Notes:
+- Networks that inspect TLS traffic break certificate checks in Python.
+  `pip-system-certs` makes Python use the Windows certificate store.
+- Ragas and LangChain versions depend on each other; the combination pinned
+  in `requirements.txt` is the one that was tested.
 
-- **Sertifika:** SSL denetimi yapan aglarda Python HTTPS isteklerinde
-  sertifika dogrulama hatasi olusur. `pip-system-certs` paketi Windows
-  sertifika deposunu kullanarak bunu cozer.
-- **Surum sabitleme:** Ragas ve LangChain surumleri birbirine bagimli;
-  `requirements.txt` icindeki kombinasyon dogrulanmistir.
+## Usage
 
-## Proje Yapisi
+Build the data and the index once:
 
-```
-src/        Ana moduller (chunking, embedding, retrieval, generation, evaluation)
-scripts/    Calistirilabilir isler (corpus, indeksleme, deney, degerlendirme)
-static/     Web arayuzu
-data/raw/   Veri setinden cikarilan corpus ve sorular
-results/    Deney sonuclari ve gozlem notlari
+```bash
+python scripts/build_corpus.py      # download the dataset
+python scripts/build_index.py       # clean + chunk + embed + index
+python scripts/test_connection.py   # check the API connection
 ```
 
-## Calistirma
+Run an experiment and score it:
 
-### Ilk kurulum
-
-```
-python scripts\build_corpus.py       # Veri setini indirir
-python scripts\build_index.py        # Temizlik + chunk + embedding + indeks
-python scripts\test_connection.py    # Baglanti dogrulamasi
+```bash
+python scripts/run_pipeline.py --retrieve-k 20 --top-k 5 --rerank --prompt cited --name my_run
+python scripts/evaluate.py --name my_run
 ```
 
-### Deney calistirma
+Results are written to `results/pipeline_<name>.json` and
+`results/eval_<name>.json`; each file records the configuration it used.
 
-```
-python scripts\run_pipeline.py --retrieve-k 20 --top-k 5 --rerank --prompt cited --name deneyim
-python scripts\evaluate.py --name deneyim
-```
+Web UI:
 
-Sonuclar `results/pipeline_<ad>.json` ve `results/eval_<ad>.json` olarak
-kaydedilir; her dosya kullanilan konfigurasyonu icerir.
-
-### Web arayuzu
-
-```
+```bash
 python -m uvicorn src.api:app --port 8000
 ```
 
-Tarayicida `http://localhost:8000`. Soru sorulur; cevap ve kullanilan baglam
-parcalari alaka skorlariyla birlikte gosterilir.
+Open `http://localhost:8000` and ask a question. The page shows the answer
+together with the retrieved chunks and their relevance scores.
 
-### Yardimci scriptler
+Diagnostic scripts in `scripts/`: `test_chunking.py`, `test_embeddings.py`,
+`test_retrieval.py`, `test_reranker.py`, `inspect_corpus.py`,
+`inspect_output.py`, and `compare_vectordb.py` (NumPy vs ChromaDB; needs
+`chromadb`).
 
+## Tests
+
+Unit tests cover the parts that run offline: chunking, text cleaning, BM25,
+the vector store and reciprocal rank fusion. They run in CI on every push.
+
+```bash
+pip install pytest
+pytest
 ```
-python scripts\test_chunking.py       # Chunk parametrelerinin etkisi
-python scripts\test_embeddings.py     # Embedding ve cache dogrulamasi
-python scripts\test_retrieval.py      # Retrieval kalitesi
-python scripts\test_reranker.py       # Reranker modeli karsilastirmasi
-python scripts\inspect_corpus.py      # Corpus metin bozukluklari
-python scripts\inspect_output.py      # Pipeline cikti kontrolu
-python scripts\compare_vectordb.py    # NumPy vs ChromaDB (chromadb kurulu olmali)
-```
 
-## Mimari Kararlar
+## Design decisions
 
-**Saf Python.** Hazir RAG framework'leri yerine her katman elle yazildi.
-Gerekce: tam kontrol, soyutlama katmani olmadan hata ayiklama kolayligi ve
-her parametrenin dogrudan olculebilmesi.
+**Plain Python.** Every layer is written by hand instead of using a RAG
+framework, so each parameter can be measured directly and there is no
+abstraction layer to debug through.
 
-**Exact search.** 137 chunk olcegi icin ANN indeksi gereksiz. ChromaDB ile
-karsilastirmali olculdu: NumPy tabanli exact search 18-21 kat daha hizli ve
-sonuclar %100 ortusuyor.
+**Exact search.** At 137 chunks an ANN index is unnecessary. Compared with
+ChromaDB, NumPy exact search was 18 to 21 times faster and returned identical
+results.
 
-**Metin temizligi.** Veri setindeki context bloklari birden fazla forum
-cevabinin birlestirilmis hali; birlesme noktalarindaki noktalama
-bozukluklari chunking'in dogal cumle ayiricilarini devre disi birakiyordu.
-Temizlik tek basina Faithfulness'a +0.054 katti.
+**Text cleaning.** The dataset's context blocks are several forum answers
+glued together. Broken punctuation at the joins disabled the chunker's natural
+sentence separators; cleaning alone added +0.054 Faithfulness.
 
-**Kaynak gosterimli prompt.** Modelden her iddianin kaynagini belirtmesi
-istendi. Faithfulness 0.039 artti. Bunun yerine denenen kisitlayici prompt
-("cikarim yapma") ise metrigi 0.186 dusurdu.
+**Citation prompt.** Asking the model to cite the source block of every claim
+raised Faithfulness by 0.039. A stricter "do not infer" prompt lowered it by
+0.186 instead.
 
-**Reranker model degisikligi.** Ilk secenek olan Qwen3-Reranker-8B test
-edildiginde alakasiz siralama uretti (bkz. `results/gozlemler.md`);
-bge-reranker-v2-m3 kullanildi.
+**Reranker choice.** The first candidate, Qwen3-Reranker-8B, produced
+irrelevant orderings in testing (see `results/gozlemler.md`), so
+bge-reranker-v2-m3 is used.
